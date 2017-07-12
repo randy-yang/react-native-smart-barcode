@@ -8,5 +8,6 @@
 node_modules
 npm-debug.log
 /android/build
+/android/libs
 /ios/**/*xcuserdata*
 /ios/**/*xcshareddata*

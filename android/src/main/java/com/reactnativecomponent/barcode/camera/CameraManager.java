@@ -17,6 +17,8 @@
 package com.reactnativecomponent.barcode.camera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -26,8 +28,10 @@ import android.os.Handler;
 import android.util.Log;
 import android.graphics.SurfaceTexture;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.io.IOException;
-
+import com.reactnativecomponent.barcode.decoding.quickmark.DecodeBufferSource;
 
 /**
  * This object wraps the Camera service object and expects to be the only one talking to it. The
@@ -53,7 +57,7 @@ public final class CameraManager {
   public static int y;
 
   private static CameraManager cameraManager;
-  private int focusTime=500;
+  private int focusTime = 1500;
 
   static final int SDK_INT; // Later we can use Build.VERSION.SDK_INT
   static {
@@ -127,7 +131,7 @@ private final Context context;
   public void initPreviewCallback() {
     previewCallback = new PreviewCallback(configManager, useOneShotPreviewCallback);
     autoFocusCallback = new AutoFocusCallback();
-    autoFocusCallback.AUTOFOCUS_INTERVAL_MS=focusTime;
+    autoFocusCallback.AUTOFOCUS_INTERVAL_MS = focusTime;
   }
 
   /**
@@ -224,7 +228,6 @@ private final Context context;
       autoFocusCallback.setHandler(handler, message);
       //Log.d(TAG, "Requesting auto-focus callback");
       camera.autoFocus(autoFocusCallback);
-
     }
   }
 
@@ -241,9 +244,9 @@ private final Context context;
     if (framingRect == null) {
     Point screenResolution = configManager.getScreenResolution();
 //    int x=this.x+screenResolution.x;
-//   int y=this.y+screenResolution.y;
-    int x=this.x;
-   int y=this.y;
+//    int y=this.y+screenResolution.y;
+      int x = this.x;
+      int y = this.y;
 //    Log.i(TAG, "x: " + this.x+",y:"+this.y);
 
       if (camera == null) {
@@ -288,9 +291,9 @@ private final Context context;
 //       rect.bottom = rect.bottom * cameraResolution.y / screenResolution.y;
       //竖屏
      rect.left = rect.left * cameraResolution.y / screenResolution.x;
-      rect.right = rect.right * cameraResolution.y / screenResolution.x;
-      rect.top = rect.top * cameraResolution.x / screenResolution.y;
-      rect.bottom = rect.bottom * cameraResolution.x / screenResolution.y;
+     rect.right = rect.right * cameraResolution.y / screenResolution.x;
+     rect.top = rect.top * cameraResolution.x / screenResolution.y;
+     rect.bottom = rect.bottom * cameraResolution.x / screenResolution.y;
 
 
       framingRectInPreview = rect;
@@ -345,6 +348,8 @@ private final Context context;
       // This format has never been seen in the wild, but is compatible as we only care
       // about the Y channel, so allow it.
       case PixelFormat.YCbCr_422_SP:
+//        YuvImage y = new YuvImage(data, PixelFormat.YCbCr_420_SP, width, height, null);
+//        String base64Str = android.util.Base64.encodeToString(data, 0);
         return new PlanarYUVLuminanceSource(data, width, height, rect.left, rect.top,
             rect.width(), rect.height());
       default:
@@ -357,6 +362,40 @@ private final Context context;
     }
     throw new IllegalArgumentException("Unsupported picture format: " +
         previewFormat + '/' + previewFormatString);
+  }
+
+  /**
+   * A factory method to build the appropriate DecodeBufferSource object based on the format
+   * of the preview buffers, as described by Camera.Parameters.
+   *
+   * @param data A preview frame.
+   * @param width The width of the image.
+   * @param height The height of the image.
+   * @return A DecodeBufferSource instance.
+   */
+  public DecodeBufferSource buildDecodeBuffer(byte[] data, int width, int height) {
+    Rect rect = getFramingRectInPreview();
+    int previewFormat = configManager.getPreviewFormat();
+    String previewFormatString = configManager.getPreviewFormatString();
+    switch (previewFormat) {
+      // This is the standard Android format which all devices are REQUIRED to support.
+      // In theory, it's the only one we should ever care about.
+      case PixelFormat.YCbCr_420_SP:
+        // This format has never been seen in the wild, but is compatible as we only care
+        // about the Y channel, so allow it.
+      case PixelFormat.YCbCr_422_SP:
+        return new DecodeBufferSource(data, width, height, rect.left, rect.top,
+                rect.width(), rect.height());
+      default:
+        // The Samsung Moment incorrectly uses this variant instead of the 'sp' version.
+        // Fortunately, it too has all the Y data up front, so we can read it.
+        if ("yuv420p".equals(previewFormatString)) {
+          return new DecodeBufferSource(data, width, height, rect.left, rect.top,
+                  rect.width(), rect.height());
+        }
+    }
+    throw new IllegalArgumentException("Unsupported picture format: " +
+            previewFormat + '/' + previewFormatString);
   }
 
   public Camera getCamera() {

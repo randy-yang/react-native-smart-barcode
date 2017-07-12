@@ -174,20 +174,16 @@ public final class ViewfinderView extends View
     public void onDraw(Canvas canvas)
     {
         Rect frame = CameraManager.get().getFramingRect();
-        if (frame == null)
-        {
+        if (frame == null) {
             return;
         }
 
-        if (!isFirst)
-        {
+        if (!isFirst) {
             isFirst = true;
             slideTop = frame.top + CORNER_WIDTH;
             slideBottom = frame.bottom - CORNER_WIDTH;
 
             SPEEN_DISTANCE= (slideBottom-slideTop)/((scanTime/16)+2);
-
-
         }
 
         int width = canvas.getWidth();
@@ -198,19 +194,15 @@ public final class ViewfinderView extends View
         paint.setColor(resultBitmap != null ? resultColor : maskColor);
         canvas.drawRect(0, 0, width, frame.top, paint);
         canvas.drawRect(0, frame.top, frame.left, frame.bottom + 1, paint);
-        canvas.drawRect(frame.right + 1, frame.top, width, frame.bottom + 1,
-                paint);
+        canvas.drawRect(frame.right + 1, frame.top, width, frame.bottom + 1, paint);
         canvas.drawRect(0, frame.bottom + 1, width, height, paint);
 
-        if (resultBitmap != null)
-        {
+        if (resultBitmap != null) {
             // Draw the opaque result bitmap over the scanning rectangle
             paint.setAlpha(OPAQUE);
             canvas.drawBitmap(resultBitmap, frame.left, frame.top, paint);
         }
-        else
-        {
-
+        else {
             // Draw a two pixel solid black border inside the framing rect
             //画框架
             paint.setColor(frameColor);
@@ -337,12 +329,10 @@ public final class ViewfinderView extends View
                             + point.getY(), 6.0f, paint);//画扫描到的可能的点
                 }
             }
-            if (currentLast != null)
-            {
+            if (currentLast != null) {
                 paint.setAlpha(OPAQUE / 2);
                 paint.setColor(resultPointColor);
-                for (ResultPoint point : currentLast)
-                {
+                for (ResultPoint point : currentLast) {
                     canvas.drawCircle(frame.left + point.getX(), frame.top
                             + point.getY(), 3.0f, paint);
                 }

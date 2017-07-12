@@ -21,6 +21,7 @@ import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Message;
 
+// 取得辨識 qrcode 用的 preview, 跟眼睛看到的畫面無關
 final class PreviewCallback implements Camera.PreviewCallback {
 
   private static final String TAG = PreviewCallback.class.getSimpleName();
@@ -46,6 +47,14 @@ final class PreviewCallback implements Camera.PreviewCallback {
       camera.setPreviewCallback(null);
     }
     if (previewHandler != null) {
+//      byte[] cutedData = new byte[data.length];
+//      for (int y = 0; y < 540; y++) {
+//        for (int x = 0; x < 540; x++) {
+//          cutedData[x * 540 + 540 - y - 1] = data[x + y * 540];
+//        }
+//      }
+//      Message message = previewHandler.obtainMessage(previewMessage, 540,
+//              540, cutedData);
       Message message = previewHandler.obtainMessage(previewMessage, cameraResolution.x,
           cameraResolution.y, data);
       message.sendToTarget();

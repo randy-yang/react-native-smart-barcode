@@ -2,14 +2,13 @@ package com.reactnativecomponent.barcode;
 
 import android.os.Environment;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.google.zxing.BarcodeFormat;
-import com.reactnativecomponent.barcode.decoding.DecodeUtil;
+import com.reactnativecomponent.barcode.decoding.zxing.DecodeUtil;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class RCTCaptureModule extends ReactContextBaseJavaModule {
                     {
                         put("upce", BarcodeFormat.UPC_E.toString());
                         put("code39", BarcodeFormat.CODE_39.toString());
-//                        put("code39mod43",BarcodeFormat. );
+//                        put("code39mod43",BarcodeFormat.);
                         put("ean13",BarcodeFormat.EAN_13.toString() );
                         put("ean8",BarcodeFormat.EAN_8.toString() );
                         put("code93", BarcodeFormat.CODE_93.toString());

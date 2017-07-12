@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
@@ -15,7 +16,6 @@ import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Handler;
-import android.os.Vibrator;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -28,37 +28,38 @@ import android.widget.PopupWindow;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.Result;
 import com.reactnativecomponent.barcode.camera.CameraManager;
-import com.reactnativecomponent.barcode.decoding.CaptureActivityHandler;
+import com.reactnativecomponent.barcode.decoding.zxing.CaptureActivityHandler;
 import com.reactnativecomponent.barcode.view.LinearGradientView;
 import com.reactnativecomponent.barcode.view.ViewfinderView;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
+import tw.com.quickmark.sdk.qmcore;
 
+// TextureView.SurfaceTextureListener 比 Camera.PreviewCallback 還要先進
 public class CaptureView extends FrameLayout implements TextureView.SurfaceTextureListener {
-
-
     private CaptureActivityHandler handler;
+
     private ViewfinderView viewfinderView;
     private boolean hasSurface;
     private Vector<BarcodeFormat> decodeFormats;
     private String characterSet;
     //private InactivityTimer inactivityTimer;
     private MediaPlayer mediaPlayer;
-    private boolean playBeep=true;
-    private static final float BEEP_VOLUME = 0.10f;
+    private boolean playBeep = false;
+    private static final float BEEP_VOLUME = 0.50f;
     private boolean vibrate;
     private Activity activity;
-    private ViewGroup.LayoutParams param;
+    private ViewGroup.LayoutParams layoutParam;
     private int ScreenWidth, ScreenHeight;
     private TextureView textureView;
     private long beginTime;
     private int height;
     private int width;
     public boolean decodeFlag = true;
+
     /**
      * 缩放级别拖动条
      */
@@ -90,6 +91,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     private long changeTime = 1000;
     private int focusTime = 1000;
     private long sleepTime = 2000;
+    private long pauseScanTime = 1000;
     public OnEvChangeListener onEvChangeListener;
 
     private View popupWindowContent;
@@ -99,8 +101,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     boolean autoStart = true;//是否自动启动扫描
     String ResultStr="";
 
-
-
+    // another decoder
+    public qmcore qmDecoder;
 
    /* private final VerticalSeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new VerticalSeekBar.OnSeekBarChangeListener() {
 
@@ -143,8 +145,19 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     public CaptureView(Activity activity, Context context) {
         super(context);
         this.activity = activity;
+
+        // QuickMark library
+        qmDecoder = new qmcore(this.activity);
+        if (!qmDecoder.mSdkLoaded) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this.activity);
+            builder.setTitle(R.string.app_name);
+            builder.setMessage("Can't load quickmarksdk.");
+            builder.setNegativeButton("ok", null);
+            builder.show();
+        }
+
         CameraManager.init(activity.getApplication());
-        param = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        layoutParam = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         density = context.getResources().getDisplayMetrics().density;
         Min_Frame_Width = (int) (100 * density + 0.5f);
         Resources resources = activity.getResources();
@@ -178,9 +191,9 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     private void initCameraManager() {
 
-        CameraManager.get().x = cX + width;
-        CameraManager.get().y = cY + height;
-        CameraManager.get().MIN_FRAME_WIDTH = MAX_FRAME_WIDTH;
+        CameraManager.get().x = cX + width; // 540
+        CameraManager.get().y = cY + height; // 429
+        CameraManager.get().MIN_FRAME_WIDTH = MAX_FRAME_WIDTH; // 270
         CameraManager.get().MIN_FRAME_HEIGHT = MAX_FRAME_HEIGHT;
         CameraManager.get().MAX_FRAME_WIDTH = MAX_FRAME_WIDTH;
         CameraManager.get().MAX_FRAME_HEIGHT = MAX_FRAME_HEIGHT;
@@ -215,10 +228,13 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         if (mHandler == null) {
             mHandler = new Handler();
         }
+        // textureView 是此 activity 呈現畫面，與相機解析無關
         textureView = new TextureView(activity);
-        textureView.setLayoutParams(param);
-        textureView.getLayoutParams().height = ScreenHeight;
-        textureView.getLayoutParams().width = ScreenWidth;
+        layoutParam.height = ScreenHeight;
+        layoutParam.height = 1088; // 畫面會變形
+        layoutParam.width = ScreenWidth;
+        textureView.setLayoutParams(layoutParam);
+        // SurfaceTexture 可以不用顯示在畫面上就能取得圖像流
         SurfaceTexture surfaceTexture = textureView.getSurfaceTexture();
         if (hasSurface) {
             initCamera(surfaceTexture);
@@ -230,7 +246,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         viewfinderView = new ViewfinderView(activity, scanTime, CORNER_COLOR);
         viewfinderView.CORNER_WIDTH = CORNER_WIDTH;
         viewfinderView.ShowText = Text;
-        viewfinderView.setLayoutParams(param);
+        viewfinderView.setLayoutParams(layoutParam);
         viewfinderView.getLayoutParams().height = ScreenHeight;
         viewfinderView.getLayoutParams().width = ScreenWidth;
         viewfinderView.setBackgroundColor(getResources().getColor(R.color.transparent));
@@ -238,18 +254,16 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         this.addView(viewfinderView);
 
         linearGradientView = new LinearGradientView(activity, activity);
-        linearGradientView.setLayoutParams(param);
+        linearGradientView.setLayoutParams(layoutParam);
         linearGradientView.setFrameColor(CORNER_COLOR);
 
 
 //        decodeFormats = null;
         characterSet = null;
 
-
-
         vibrate = true;
 
-        setPlayBeep(true);
+        setPlayBeep(playBeep);
 //        initProgressBar();
 //        progressBar = new VerticalSeekBar(activity);
       /*  popupWindowContent = View.inflate(activity, R.layout.seekbar_layout, null);
@@ -260,9 +274,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         progressBar.setIndeterminate(false);
         progressBar.setThumb(null);*/
 //        progressBar.setProgressDrawable(getResources().getDrawable(android.R.drawable.progress_horizontal));
-
-
-//
 
       /*
        //渐变色drawable
@@ -336,7 +347,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
             int leftMargin = (width / 2) + cX + MAX_FRAME_WIDTH / 2;
             int topMargin = height / 2 + cY / 2 - MAX_FRAME_HEIGHT;
 //        progresslp.gravity = Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL;
-//            progressBar.setLayoutParams(param);
+//            progressBar.setLayoutParams(layoutParam);
 
             // 创建PopupWindow实例,200,LayoutParams.MATCH_PARENT分别是宽度和高度
             popupWindow = new PopupWindow(CaptureView.this);
@@ -368,9 +379,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
         }
 //        decodeFormats = null;
-
-        handler = new CaptureActivityHandler(this, decodeFormats,
-                characterSet);
+        handler = new CaptureActivityHandler(this, decodeFormats, characterSet);
 //        handler.restartPreviewAndDecode();
     }
 
@@ -385,12 +394,24 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     }
 
     public void stopQR() {
-        this.decodeFlag = false;
+        setDecodeFlag(false);
     }
 
     public void startQR() {
-        this.decodeFlag = true;
-        startScan();
+        // 連續掃描間隔時間
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                setDecodeFlag(true);
+                startScan();
+            }
+        }, pauseScanTime );
+
+    }
+
+    private void setDecodeFlag(boolean decodeFlag) {
+        this.decodeFlag = decodeFlag;
     }
 
     /**
@@ -413,16 +434,13 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     private void initCamera(SurfaceTexture surfaceTexture) {
         try {
             CameraManager.get().openDriver(surfaceTexture);
-
-
         } catch (IOException ioe) {
             return;
         } catch (RuntimeException e) {
             return;
         }
         if (handler == null) {
-            handler = new CaptureActivityHandler(this, decodeFormats,
-                    characterSet);
+            handler = new CaptureActivityHandler(this, decodeFormats, characterSet);
         }
     }
 
@@ -502,10 +520,10 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
             mediaPlayer.start();
         }
         //抖动机身
-      /*  if (vibrate) {
-            Vibrator vibrator = (Vibrator) activity.getSystemService(activity.VIBRATOR_SERVICE);
-            vibrator.vibrate(VIBRATE_DURATION);
-        }*/
+//        if (vibrate) {
+//            Vibrator vibrator = (Vibrator) activity.getSystemService(activity.VIBRATOR_SERVICE);
+//            vibrator.vibrate(VIBRATE_DURATION);
+//        }
     }
 
     /**
@@ -525,7 +543,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     public void setHandler(CaptureActivityHandler handler) {
         this.handler = handler;
-
     }
 
     public void setAutoStart(boolean autoStart) {
@@ -545,7 +562,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     }
 
     public void setcX(int cX) {
-
         if (width != 0 && ((cX > width / 2 - Min_Frame_Width) || cX < (Min_Frame_Width - width / 2))) {
             if (cX > 0) {
                 cX = width / 2 - Min_Frame_Width;
@@ -564,8 +580,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     }
 
     public void setcY(int cY) {
-
-
         if (height != 0 && ((cY > height / 2 - Min_Frame_Width) || cY < (Min_Frame_Width - height / 2))) {
             if (cY > 0) {
                 cY = height / 2 - Min_Frame_Width;
@@ -785,7 +799,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
                     viewfinderView.drawLine = true;
                     surfaceTexture = textureView.getSurfaceTexture();
 //                    startScan();
-                      startQR();
+                    startQR();
                     initProgressBar();
                 }
 
@@ -812,19 +826,17 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     }
 
+
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-//        Log.i("Test", "height:" + height + "width:" + width);
+//        Log.i("Test", "height:" + height + "width:" + width); // h:960 w:540
 
         CameraManager.init(activity);
 
         initCameraManager();
-
         surfaceTexture = surface;
 
-
         textureView.setAlpha(1.0f);
-
 
         if (autoStart) {
             startScan();
@@ -833,7 +845,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+        Log.i("textureSizeChanged", "height:" + height + "width:" + width);
     }
 
     @Override
@@ -844,7 +856,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     @Override
     public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+        // 這裡更新頻率同 fps
+//        Log.i("onSurfaceTextureUpdated", "height:" + height + "width:" + width);
     }
 
 

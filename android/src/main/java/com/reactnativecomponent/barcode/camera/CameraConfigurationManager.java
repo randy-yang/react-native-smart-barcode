@@ -18,6 +18,7 @@ package com.reactnativecomponent.barcode.camera;
 
 import android.content.Context;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.os.Build;
 import android.util.Log;
@@ -25,6 +26,8 @@ import android.view.Display;
 import android.view.WindowManager;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 final class CameraConfigurationManager {
@@ -33,7 +36,7 @@ final class CameraConfigurationManager {
 
   private static final int TEN_DESIRED_ZOOM = 27;
   @SuppressWarnings("unused")
-private static final int DESIRED_SHARPNESS = 30;
+  private static final int DESIRED_SHARPNESS = 30;
 
   private static final Pattern COMMA_PATTERN = Pattern.compile(",");
 
@@ -60,7 +63,7 @@ private static final int DESIRED_SHARPNESS = 30;
     screenResolution = new Point(display.getWidth(), display.getHeight());
 //    Log.d(TAG, "Screen resolution: " + screenResolution);
     Point screenResolutionForCamera = new Point();
-    screenResolutionForCamera.x = screenResolution.x;
+    screenResolutionForCamera.x = screenResolution.x; // 畫面看到的似乎跟解析度沒關係？
     screenResolutionForCamera.y = screenResolution.y;
     // preview size is always something like 480*320, other 320*480
 	if (screenResolution.x < screenResolution.y) {
@@ -80,27 +83,32 @@ private static final int DESIRED_SHARPNESS = 30;
   void setDesiredCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();
 //    Log.d(TAG, "Setting preview size: " + cameraResolution);
-    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
+    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y); // 960x540
+    parameters.setPreviewSize(1088, 1088); // 畫面會變形
+//    parameters.set("video-size", "320x240"); // 跟畫面無關
+
     setFlash(parameters);
     setZoom(parameters);
+    setBarcodescan(camera, parameters);
+
     //setSharpness(parameters);
 //    parameters.set("orientation", "portrait");
     if (Integer.parseInt(Build.VERSION.SDK) >= 8) {
-        setDisplayOrientation(camera, 90);
-        } 
-        camera.setParameters(parameters);
-      }
-      
-      protected void setDisplayOrientation(Camera camera, int angle) {
-    	   Method downPolymorphic;
-    	   try {
-    	    downPolymorphic = camera.getClass().getMethod(
-    	      "setDisplayOrientation", new Class[] { int.class });
-    	    if (downPolymorphic != null)
-    	     downPolymorphic.invoke(camera, new Object[] { angle });
-    	   } catch (Exception e1) {
-    	   }
-    	  }
+      setDisplayOrientation(camera, 90);
+    }
+    camera.setParameters(parameters);
+  }
+
+  protected void setDisplayOrientation(Camera camera, int angle) {
+    Method downPolymorphic;
+    try {
+      downPolymorphic = camera.getClass().getMethod(
+              "setDisplayOrientation", new Class[]{int.class});
+      if (downPolymorphic != null)
+        downPolymorphic.invoke(camera, new Object[]{angle});
+    } catch (Exception e1) {
+    }
+  }
 
   Point getCameraResolution() {
     return cameraResolution;
@@ -176,7 +184,6 @@ private static final int DESIRED_SHARPNESS = 30;
         bestY = newY;
         diff = newDiff;
       }
-
     }
 
     if (bestX > 0 && bestY > 0) {
@@ -203,6 +210,28 @@ private static final int DESIRED_SHARPNESS = 30;
     return tenBestValue;
   }
 
+  private void setBarcodescan(Camera camera, Camera.Parameters parameters) {
+//    camera.stopFaceDetection();
+//    camera.cancelAutoFocus();
+
+//    List<Camera.Area> fAreas = new ArrayList<Camera.Area>();
+//    Rect rect = new Rect(-100, -600, 200, 200);
+//    fAreas.add(new Camera.Area(rect, 1000));
+
+    // 自動連續對焦
+    if (Build.VERSION.SDK_INT >= 23) { // 此功能 htc m7(api 21) 無效...
+      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+    } else {
+      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+    }
+
+//    parameters.setFocusAreas(fAreas);
+//    parameters.setMeteringAreas(fAreas);
+
+    parameters.setPreviewFpsRange(24000, 24000); // 24fps
+//    parameters.setSceneMode(Camera.Parameters.SCENE_MODE_HDR);
+  }
+
   private void setFlash(Camera.Parameters parameters) {
     // FIXME: This is a hack to turn the flash off on the Samsung Galaxy.
     // And this is a hack-hack to work around a different value on the Behold II
@@ -215,7 +244,7 @@ private static final int DESIRED_SHARPNESS = 30;
       parameters.set("flash-value", 2);
     }
     // This is the standard setting to turn the flash off that all devices should honor.
-    parameters.set("flash-mode", "off");
+    parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
   }
 
   private void setZoom(Camera.Parameters parameters) {

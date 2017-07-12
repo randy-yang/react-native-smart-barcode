@@ -16,6 +16,7 @@ import com.facebook.react.uimanager.UIManagerModule;
 import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
 import com.google.zxing.BarcodeFormat;
+//import com.reactnativecomponent.barcode.decoding.BarcodeFormat;
 
 import java.util.ArrayList;
 import java.util.List;
