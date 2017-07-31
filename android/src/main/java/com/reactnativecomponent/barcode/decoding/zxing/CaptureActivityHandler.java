@@ -42,7 +42,7 @@ public final class CaptureActivityHandler extends Handler {
     private static final String TAG = CaptureActivityHandler.class.getSimpleName();
 
     private final CaptureView captureView;
-//    private final DecodeThread decodeThread;
+//   private final DecodeThread decodeThread;
     private final QmDecodeThread decodeThread;
     private State state;
 
@@ -55,10 +55,10 @@ public final class CaptureActivityHandler extends Handler {
     public CaptureActivityHandler(CaptureView captureView, Vector<BarcodeFormat> decodeFormats,
                                   String characterSet) {
         this.captureView = captureView;
-        decodeThread = new QmDecodeThread(captureView, decodeFormats, characterSet,
-                new ViewfinderResultPointCallback(captureView.getViewfinderView()));
-//        decodeThread = new DecodeThread(captureView, decodeFormats, characterSet,
-//                new ViewfinderResultPointCallback(captureView.getViewfinderView()));
+         decodeThread = new QmDecodeThread(captureView, decodeFormats, characterSet,
+                 new ViewfinderResultPointCallback(captureView.getViewfinderView()));
+//       decodeThread = new DecodeThread(captureView, decodeFormats, characterSet,
+//               new ViewfinderResultPointCallback(captureView.getViewfinderView()));
         decodeThread.start();
         state = State.SUCCESS;
 

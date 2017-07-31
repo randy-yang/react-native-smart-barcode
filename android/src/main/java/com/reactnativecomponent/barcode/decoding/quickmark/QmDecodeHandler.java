@@ -88,8 +88,9 @@ final class QmDecodeHandler extends Handler {
    * @param height The height of the preview frame.
    */
   private void decode(byte[] data, int width, int height) {
-    width = 1088;
-    height = 1088;
+//     width = 540;
+//     height = 540;
+    width = height;
     byte[] rotatedData = new byte[data.length];
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++)
@@ -99,15 +100,7 @@ final class QmDecodeHandler extends Handler {
 //    PlanarYUVLuminanceSource source = CameraManager.get().buildLuminanceSource(data, width, height);
 
     byte[] matrix = source.getMatrix();
-    // 80925
-    // source
-//    dataHeight = 960
-//    dataWidth = 540
-//    left = 127
-//    top = 72
-//    yuvData = {byte[777600]@5892}
-//    height = 285
-//    width = 285
+
     int sWidth = source.getWidth();
     int sHeight = source.getHeight();
     tw.com.quickmark.sdk.Result qmResult = this.qmDecoder.decode(

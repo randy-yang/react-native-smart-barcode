@@ -106,8 +106,8 @@ DecodeHandler extends Handler {
 	// it says: "It works for any pixel format where
 	// the Y channel is planar and appears first, including
 	// YCbCr_420_SP and YCbCr_422_SP."
-    width = 1088;
-    height = 1088;
+//    width = 1088;
+//    height = 1088;
 	byte[] rotatedData = new byte[data.length];
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++)

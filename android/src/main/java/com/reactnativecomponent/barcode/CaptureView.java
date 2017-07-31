@@ -89,7 +89,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
      */
     public int scanTime = 1000;
     private long changeTime = 1000;
-    private int focusTime = 1000;
+    private int focusTime = 1500;
     private long sleepTime = 2000;
     private long pauseScanTime = 1000;
     public OnEvChangeListener onEvChangeListener;
@@ -211,7 +211,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
             this.addView(this.viewfinderView);
         }
     }*/
-    
+
     /**
      * Activity onResume后调用view的onAttachedToWindow
      */
@@ -230,8 +230,9 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         }
         // textureView 是此 activity 呈現畫面，與相機解析無關
         textureView = new TextureView(activity);
-        layoutParam.height = ScreenHeight;
-        layoutParam.height = 1088; // 畫面會變形
+//        layoutParam.height = ScreenHeight; //J2 540 m7 1088 m8 1080
+//        layoutParam.height = 540; // 畫面若跟相機輸出不符會變形
+        layoutParam.height = ScreenWidth; // 讓高度同寬度
         layoutParam.width = ScreenWidth;
         textureView.setLayoutParams(layoutParam);
         // SurfaceTexture 可以不用顯示在畫面上就能取得圖像流
@@ -1073,5 +1074,3 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     }
 }
-
-

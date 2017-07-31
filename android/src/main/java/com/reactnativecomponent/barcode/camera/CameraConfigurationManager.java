@@ -83,8 +83,9 @@ final class CameraConfigurationManager {
   void setDesiredCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();
 //    Log.d(TAG, "Setting preview size: " + cameraResolution);
-    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y); // 960x540
-    parameters.setPreviewSize(1088, 1088); // 畫面會變形
+//    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y); // 960x540
+//    parameters.setPreviewSize(540, 540); // 畫面可能會變形
+    parameters.setPreviewSize(cameraResolution.y, cameraResolution.y);
 //    parameters.set("video-size", "320x240"); // 跟畫面無關
 
     setFlash(parameters);
@@ -228,7 +229,7 @@ final class CameraConfigurationManager {
 //    parameters.setFocusAreas(fAreas);
 //    parameters.setMeteringAreas(fAreas);
 
-    parameters.setPreviewFpsRange(24000, 24000); // 24fps
+    // parameters.setPreviewFpsRange(24000, 24000); // 24fps
 //    parameters.setSceneMode(Camera.Parameters.SCENE_MODE_HDR);
   }
 
