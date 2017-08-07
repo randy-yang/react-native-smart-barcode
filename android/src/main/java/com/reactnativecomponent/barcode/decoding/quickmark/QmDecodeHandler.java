@@ -88,13 +88,26 @@ final class QmDecodeHandler extends Handler {
    * @param height The height of the preview frame.
    */
   private void decode(byte[] data, int width, int height) {
-//     width = 540;
-//     height = 540;
-    width = height;
+    /*
+       1 2 3 4
+       5 6 7 8
+       往右 90 度
+       5 1
+       6 2
+       7 3
+       8 4
+     */
     byte[] rotatedData = new byte[data.length];
     for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++)
-        rotatedData[x * height + height - y - 1] = data[x + y * width];
+     for (int x = 0; x < width; x++) {
+       int rotatedIdx = x * height + height - y - 1;
+       int sourceIdx = x + y * width;
+       try {
+         rotatedData[rotatedIdx] = data[sourceIdx];
+       } catch (IndexOutOfBoundsException iex) {
+         Log.d(TAG, iex.toString());
+       }
+     }
     }
     PlanarYUVLuminanceSource source = CameraManager.get().buildLuminanceSource(rotatedData, height, width);
 //    PlanarYUVLuminanceSource source = CameraManager.get().buildLuminanceSource(data, width, height);

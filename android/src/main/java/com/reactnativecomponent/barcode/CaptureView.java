@@ -146,6 +146,16 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         super(context);
         this.activity = activity;
 
+				/*
+				 * Load dummy library to force system to
+				 * use 32 bit compatibility mode
+				 */
+        try {
+            System.loadLibrary("hello-jni");
+        } catch (UnsatisfiedLinkError ule) {
+            ule.printStackTrace();
+        }
+
         // QuickMark library
         qmDecoder = new qmcore(this.activity);
         if (!qmDecoder.mSdkLoaded) {
@@ -163,7 +173,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         Resources resources = activity.getResources();
         DisplayMetrics dm = resources.getDisplayMetrics();
         ScreenWidth = dm.widthPixels;
-        ScreenHeight = dm.heightPixels;
+        // ScreenHeight = dm.heightPixels;
+        ScreenHeight = ScreenWidth;
 
         //  x=screenResolution.x;
         // y=screenResolution.y;
@@ -230,9 +241,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         }
         // textureView 是此 activity 呈現畫面，與相機解析無關
         textureView = new TextureView(activity);
-//        layoutParam.height = ScreenHeight; //J2 540 m7 1088 m8 1080
-//        layoutParam.height = 540; // 畫面若跟相機輸出不符會變形
-        layoutParam.height = ScreenWidth; // 讓高度同寬度
+        layoutParam.height = ScreenHeight; // 讓高度同寬度 J2 540 m7 1088 m8 1080
         layoutParam.width = ScreenWidth;
         textureView.setLayoutParams(layoutParam);
         // SurfaceTexture 可以不用顯示在畫面上就能取得圖像流
