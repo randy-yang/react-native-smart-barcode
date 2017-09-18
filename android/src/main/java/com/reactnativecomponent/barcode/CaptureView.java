@@ -173,10 +173,15 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         Resources resources = activity.getResources();
         DisplayMetrics dm = resources.getDisplayMetrics();
         ScreenWidth = dm.widthPixels;
-        // ScreenHeight = dm.heightPixels;
-        ScreenHeight = ScreenWidth;
+        ScreenHeight = dm.heightPixels;
 
-        //  x=screenResolution.x;
+        if (ScreenWidth > ScreenHeight) { // 不同裝置的預設螢幕方向可能不同
+            ScreenWidth = ScreenHeight;
+        } else {
+            ScreenHeight = ScreenWidth;
+        }
+
+        // x=screenResolution.x;
         // y=screenResolution.y;
 
         hasSurface = false;

@@ -105,7 +105,7 @@ final class QmDecodeHandler extends Handler {
        try {
          rotatedData[rotatedIdx] = data[sourceIdx];
        } catch (IndexOutOfBoundsException iex) {
-         Log.d(TAG, iex.toString());
+//         Log.d(TAG, iex.toString());
        }
      }
     }

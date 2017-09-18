@@ -82,11 +82,13 @@ final class CameraConfigurationManager {
    */
   void setDesiredCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();
-//    Log.d(TAG, "Setting preview size: " + cameraResolution);
-//    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y); // 960x540
-//    parameters.setPreviewSize(540, 540); // 畫面可能會變形
-    parameters.setPreviewSize(cameraResolution.y, cameraResolution.y);
-//    parameters.set("video-size", "320x240"); // 跟畫面無關
+//    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
+    // 不同裝置的預設螢幕方向可能不同，沒設好畫面會變形
+    if (cameraResolution.y > cameraResolution.x) {
+      parameters.setPreviewSize(cameraResolution.x, cameraResolution.x);
+    } else {
+      parameters.setPreviewSize(cameraResolution.y, cameraResolution.y);
+    }
 
     setFlash(parameters);
     setZoom(parameters);
@@ -219,11 +221,13 @@ final class CameraConfigurationManager {
 //    Rect rect = new Rect(-100, -600, 200, 200);
 //    fAreas.add(new Camera.Area(rect, 1000));
 
+    parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
     // 自動連續對焦
-    if (Build.VERSION.SDK_INT >= 23) { // 此功能 htc m7(api 21) 無效...
-      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+    if (Build.VERSION.SDK_INT >= 23) {
+      // 此功能 htc m7(api 21) 無效 三星 On5 無效(api 21)...
+//      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
     } else {
-      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+//      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
     }
 
 //    parameters.setFocusAreas(fAreas);

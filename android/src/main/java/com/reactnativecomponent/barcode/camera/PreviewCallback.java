@@ -49,8 +49,16 @@ final class PreviewCallback implements Camera.PreviewCallback {
     if (previewHandler != null) {
       // Message message = previewHandler.obtainMessage(previewMessage,
       //   cameraResolution.x, cameraResolution.y, data);
-      Message message = previewHandler.obtainMessage(previewMessage,
-        cameraResolution.y, cameraResolution.y, data);
+
+      Message message;
+      if (cameraResolution.x > cameraResolution.y) { // 不同裝置的預設螢幕方向可能不同
+        message = previewHandler.obtainMessage(previewMessage,
+                cameraResolution.y, cameraResolution.y, data);
+      } else {
+        message = previewHandler.obtainMessage(previewMessage,
+                cameraResolution.x, cameraResolution.x, data);
+      }
+
       message.sendToTarget();
       previewHandler = null;
     } else {
