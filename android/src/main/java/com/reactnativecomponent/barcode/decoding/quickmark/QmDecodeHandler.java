@@ -42,8 +42,7 @@ import tw.com.quickmark.sdk.qmcore;
 
 final class QmDecodeHandler extends Handler {
 
-//  private static final String TAG = DecodeHandler.class.getSimpleName();
-  private static final String TAG ="Test";
+  private static final String TAG = QmDecodeHandler.class.getSimpleName();
 
   private final CaptureView captureView;
   private final MultiFormatReader multiFormatReader;
@@ -89,6 +88,12 @@ final class QmDecodeHandler extends Handler {
    */
   private void decode(byte[] data, int width, int height) {
     /*
+       旋轉畫面
+       +--------+      +----+
+       |        |  ->  |    |
+       +--------+      |    |
+                       |    |
+                       +----+
        1 2 3 4
        5 6 7 8
        往右 90 度
@@ -102,13 +107,10 @@ final class QmDecodeHandler extends Handler {
      for (int x = 0; x < width; x++) {
        int rotatedIdx = x * height + height - y - 1;
        int sourceIdx = x + y * width;
-       try {
          rotatedData[rotatedIdx] = data[sourceIdx];
-       } catch (IndexOutOfBoundsException iex) {
-//         Log.d(TAG, iex.toString());
-       }
      }
     }
+    // 取得掃描範圍框中的畫面資料
     PlanarYUVLuminanceSource source = CameraManager.get().buildLuminanceSource(rotatedData, height, width);
 //    PlanarYUVLuminanceSource source = CameraManager.get().buildLuminanceSource(data, width, height);
 
@@ -119,11 +121,11 @@ final class QmDecodeHandler extends Handler {
     tw.com.quickmark.sdk.Result qmResult = this.qmDecoder.decode(
             matrix, sWidth, sHeight, 8, decodeFormat);
     if (qmResult != null) {
-      long end = System.currentTimeMillis();
       Message message = Message.obtain(
               captureView.getHandler(),
               R.id.decode_succeeded,
               ZxingUtil.toZxingResult(qmResult));
+      // 下面那段應該用不到
 //      Bundle bundle = new Bundle();
 //      bundle.putParcelable(QmDecodeThread.BARCODE_BITMAP, source.renderCroppedGreyscaleBitmap());
 //      message.setData(bundle);

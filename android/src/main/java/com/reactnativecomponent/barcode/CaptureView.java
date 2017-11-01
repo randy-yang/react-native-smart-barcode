@@ -15,6 +15,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -140,19 +141,20 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
 
     };*/
-
+    private static final String TAG = CaptureView.class.getSimpleName();
 
     public CaptureView(Activity activity, Context context) {
         super(context);
         this.activity = activity;
 
-				/*
-				 * Load dummy library to force system to
-				 * use 32 bit compatibility mode
-				 */
+        /*
+         * Load dummy library to force system to
+         * use 32 bit compatibility mode
+         */
         try {
             System.loadLibrary("hello-jni");
         } catch (UnsatisfiedLinkError ule) {
+            Log.i(TAG, "Loading hello-jni failed.");
             ule.printStackTrace();
         }
 
@@ -160,7 +162,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         qmDecoder = new qmcore(this.activity);
         if (!qmDecoder.mSdkLoaded) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this.activity);
-            builder.setTitle(R.string.app_name);
+            builder.setTitle("QRCode");
             builder.setMessage("Can't load quickmarksdk.");
             builder.setNegativeButton("ok", null);
             builder.show();
@@ -175,14 +177,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         ScreenWidth = dm.widthPixels;
         ScreenHeight = dm.heightPixels;
 
-        if (ScreenWidth > ScreenHeight) { // 不同裝置的預設螢幕方向可能不同
-            ScreenWidth = ScreenHeight;
-        } else {
-            ScreenHeight = ScreenWidth;
-        }
-
-        // x=screenResolution.x;
-        // y=screenResolution.y;
+        // Sharp w:1080, h:1920, density:3
+        // J2    w:540,  h:960   density:1.5
 
         hasSurface = false;
         this.setOnTouchListener(new TouchListener());
@@ -207,9 +203,9 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     private void initCameraManager() {
 
-        CameraManager.get().x = cX + width; // 540
-        CameraManager.get().y = cY + height; // 429
-        CameraManager.get().MIN_FRAME_WIDTH = MAX_FRAME_WIDTH; // 270
+        CameraManager.get().x = cX + width;
+        CameraManager.get().y = cY + height;
+        CameraManager.get().MIN_FRAME_WIDTH = MAX_FRAME_WIDTH;
         CameraManager.get().MIN_FRAME_HEIGHT = MAX_FRAME_HEIGHT;
         CameraManager.get().MAX_FRAME_WIDTH = MAX_FRAME_WIDTH;
         CameraManager.get().MAX_FRAME_HEIGHT = MAX_FRAME_HEIGHT;
@@ -246,7 +242,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         }
         // textureView 是此 activity 呈現畫面，與相機解析無關
         textureView = new TextureView(activity);
-        layoutParam.height = ScreenHeight; // 讓高度同寬度 J2 540 m7 1088 m8 1080
+        layoutParam.height = ScreenHeight;
         layoutParam.width = ScreenWidth;
         textureView.setLayoutParams(layoutParam);
         // SurfaceTexture 可以不用顯示在畫面上就能取得圖像流
@@ -255,7 +251,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
             initCamera(surfaceTexture);
         } else {
             textureView.setSurfaceTextureListener(this);
-
         }
         this.addView(textureView);
         viewfinderView = new ViewfinderView(activity, scanTime, CORNER_COLOR);
@@ -271,7 +266,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         linearGradientView = new LinearGradientView(activity, activity);
         linearGradientView.setLayoutParams(layoutParam);
         linearGradientView.setFrameColor(CORNER_COLOR);
-
 
 //        decodeFormats = null;
         characterSet = null;
@@ -432,7 +426,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     /**
      * ondestroy调用,会执行onDetachedFromWindow
      */
-
     @Override
     protected void onDetachedFromWindow() {
         this.removeView(viewfinderView);
@@ -461,9 +454,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     public void drawViewfinder() {
         viewfinderView.drawViewfinder();
-
     }
-
 
     public void handleDecode(Result obj, Bitmap barcode) {
 
@@ -785,7 +776,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
                 public void onAnimationEnd(Animator animation) {
 //                    stopScan();
 
-
                     int widthScan = (width / 2 - Math.abs(cX)) - CORNER_WIDTH;
 
                     if (widthScan < Min_Frame_Width) {
@@ -805,9 +795,9 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
                     CameraManager.get().MAX_FRAME_WIDTH = MAX_FRAME_WIDTH;
                     CameraManager.get().MAX_FRAME_HEIGHT = MAX_FRAME_HEIGHT;
 
-//                    Log.i("Test", "width:" + width + ",height:" + height);
-//                    Log.i("Test", "cX:" + cX + ",cY:" + cY);
-//                    Log.i("Test", "MAX_FRAME_WIDTH:" + MAX_FRAME_WIDTH + ",MAX_FRAME_HEIGHT:" + MAX_FRAME_HEIGHT);
+//                    Log.i(TAG, "width:" + width + ",height:" + height);
+//                    Log.i(TAG, "cX:" + cX + ",cY:" + cY);
+//                    Log.i(TAG, "MAX_FRAME_WIDTH:" + MAX_FRAME_WIDTH + ",MAX_FRAME_HEIGHT:" + MAX_FRAME_HEIGHT);
 
                     CameraManager.get().framingRectInPreview = null;
 //                    decodeFormats = null;
@@ -844,8 +834,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-//        Log.i("Test", "height:" + height + "width:" + width); // h:960 w:540
-
         CameraManager.init(activity);
 
         initCameraManager();
@@ -860,7 +848,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        Log.i("textureSizeChanged", "height:" + height + "width:" + width);
+//        Log.i("textureSizeChanged", "height:" + height + "width:" + width);
     }
 
     @Override
@@ -900,7 +888,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
                 case MotionEvent.ACTION_DOWN:
                     mode = MODE_ZOOM;
                     startDis = event.getY();
-//                    Log.i("Test", "ACTION_DOWN");
+//                    Log.i(TAG, "ACTION_DOWN");
 
 
 //                    int leftMargin = (width / 2) + cX + MAX_FRAME_WIDTH/2-(int)(25*density);
@@ -942,7 +930,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
                         } else if (scale == 0 && endDis > 0) {
                             scale = 1;
                         }
-//                        Log.i("Test", "scale:" + scale);
+//                        Log.i(TAG, "scale:" + scale);
 
                         /**
                          * 处理时间
@@ -958,7 +946,7 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
                             //zoom不能超出范围
                             if (zoom > getMaxZoom()) zoom = getMaxZoom();
                             if (zoom < 0) zoom = 0;
-//                            Log.i("Test", "zoom:" + zoom + ",Time:" + time);
+//                            Log.i(TAG, "zoom:" + zoom + ",Time:" + time);
                             setZoom(zoom);
 //                            progressBar.setProgress(zoom);
                             //将最后一次的距离设为当前距离

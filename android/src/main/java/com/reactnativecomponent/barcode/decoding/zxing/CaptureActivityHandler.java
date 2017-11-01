@@ -69,22 +69,23 @@ public final class CaptureActivityHandler extends Handler {
 
     @Override
     public void handleMessage(Message message) {
-        Log.d(TAG, "handleMessage: " + message.what);
+//        Log.d(TAG, "handleMessage: " + message.what);
         if (message.what == R.id.auto_focus) {//            case R.id.auto_focus:
-            Log.d(TAG, "Got auto-focus message");
+//            Log.d(TAG, "Got auto-focus message");
             // When one auto focus pass finishes, start another. This is the closest thing to
             // continuous AF. It does seem to hunt a bit, but I'm not sure what else to do.
             if (state == State.PREVIEW) {
                 // 這邊可以改用 parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                // 在 CameraConfigurationManager 裡改，但某些機種無效
                 CameraManager.get().requestAutoFocus(this, R.id.auto_focus);
             }
 
         } else if (message.what == R.id.restart_preview) {//            case R.id.restart_preview:
-            Log.d(TAG, "Got restart preview message");
+//            Log.d(TAG, "Got restart preview message");
             restartPreviewAndDecode();
 
         } else if (message.what == R.id.decode_succeeded) {//            case R.id.decode_succeeded:
-            Log.d(TAG, "Got decode succeeded message");
+//            Log.d(TAG, "Got decode succeeded message");
 
                 state = State.SUCCESS;
                 Bundle bundle = message.getData();
@@ -94,7 +95,7 @@ public final class CaptureActivityHandler extends Handler {
 
 //            case R.id.decode_failed:
         } else if (message.what == R.id.decode_failed) {
-            Log.d(TAG, "Got decode_failed result message");
+//            Log.d(TAG, "Got decode_failed result message");
             /**
              *扫码失败继续执行线程
              */
@@ -102,7 +103,7 @@ public final class CaptureActivityHandler extends Handler {
             state = State.PREVIEW;
             CameraManager.get().requestPreviewFrame(decodeThread.getHandler(), R.id.decode);
         } else if (message.what == R.id.return_scan_result) {
-            Log.d(TAG, "Got return scan result message");
+//            Log.d(TAG, "Got return scan result message");
             captureView.ShowResult((Intent) message.obj);
 
 

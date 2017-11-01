@@ -18,10 +18,11 @@ package com.reactnativecomponent.barcode.camera;
 
 import android.graphics.Point;
 import android.hardware.Camera;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
 
-// 取得辨識 qrcode 用的 preview, 跟眼睛看到的畫面無關
+// 從相機傳進來的影像，取得辨識 qrcode 用的 preview, 跟眼睛看到的畫面不同層
 final class PreviewCallback implements Camera.PreviewCallback {
 
   private static final String TAG = PreviewCallback.class.getSimpleName();
@@ -47,17 +48,8 @@ final class PreviewCallback implements Camera.PreviewCallback {
       camera.setPreviewCallback(null);
     }
     if (previewHandler != null) {
-      // Message message = previewHandler.obtainMessage(previewMessage,
-      //   cameraResolution.x, cameraResolution.y, data);
-
-      Message message;
-      if (cameraResolution.x > cameraResolution.y) { // 不同裝置的預設螢幕方向可能不同
-        message = previewHandler.obtainMessage(previewMessage,
-                cameraResolution.y, cameraResolution.y, data);
-      } else {
-        message = previewHandler.obtainMessage(previewMessage,
-                cameraResolution.x, cameraResolution.x, data);
-      }
+       Message message = previewHandler.obtainMessage(previewMessage,
+         cameraResolution.x, cameraResolution.y, data);
 
       message.sendToTarget();
       previewHandler = null;

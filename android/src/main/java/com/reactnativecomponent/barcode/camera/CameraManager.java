@@ -227,10 +227,28 @@ private final Context context;
     if (camera != null && previewing) {
       autoFocusCallback.setHandler(handler, message);
       //Log.d(TAG, "Requesting auto-focus callback");
+//      camera.cancelAutoFocus();
+      Camera.Parameters parameters = camera.getParameters();
+
+      // TODO 未來會有全螢幕版本的相機，這邊就要調整
+//      Rect rect = new Rect(-860, -450, -340, 450);
+      Rect rect = new Rect(-800, -400, -380, 400);
+      List<Camera.Area> fAreas = new ArrayList<Camera.Area>();
+      fAreas.add(new Camera.Area(rect, 1000));
+
+      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+//      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+      if (parameters.getMaxNumFocusAreas() > 0) {
+        parameters.setFocusAreas(fAreas);
+      };
+      if (parameters.getMaxNumMeteringAreas() > 0) {
+        parameters.setMeteringAreas(fAreas);
+      }
+
+      camera.setParameters(parameters);
       camera.autoFocus(autoFocusCallback);
     }
   }
-
 
 
   /**

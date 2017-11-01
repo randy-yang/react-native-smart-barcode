@@ -27,6 +27,7 @@ import android.view.WindowManager;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -52,6 +53,7 @@ final class CameraConfigurationManager {
 
   /**
    * Reads, one time, values from the camera that are needed by the app.
+   * 只會在 App 中執行一次，不管重複開啟相機幾次
    */
   void initFromCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();
@@ -61,17 +63,21 @@ final class CameraConfigurationManager {
     WindowManager manager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     Display display = manager.getDefaultDisplay();
     screenResolution = new Point(display.getWidth(), display.getHeight());
-//    Log.d(TAG, "Screen resolution: " + screenResolution);
+
+    // Sharp x:1080, y:1920
+    // J2    x:540,  y:960
     Point screenResolutionForCamera = new Point();
-    screenResolutionForCamera.x = screenResolution.x; // 畫面看到的似乎跟解析度沒關係？
+    screenResolutionForCamera.x = screenResolution.x; // 畫面解析度跟相機解析度是分開的
     screenResolutionForCamera.y = screenResolution.y;
-    // preview size is always something like 480*320, other 320*480
+
+    // 相機的輸出解析度要用橫的來看，如果手機是直的話，長寬要交換一下
 	if (screenResolution.x < screenResolution.y) {
 		screenResolutionForCamera.x = screenResolution.y;
 		screenResolutionForCamera.y = screenResolution.x;
 	}
 	cameraResolution = getCameraResolution(parameters, screenResolutionForCamera);
-//    Log.d(TAG, "Camera resolution: " + screenResolution);
+    // Sharp x:1920, y:1080
+    // J2    x:960,  y:540
   }
 
   /**
@@ -82,13 +88,7 @@ final class CameraConfigurationManager {
    */
   void setDesiredCameraParameters(Camera camera) {
     Camera.Parameters parameters = camera.getParameters();
-//    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
-    // 不同裝置的預設螢幕方向可能不同，沒設好畫面會變形
-    if (cameraResolution.y > cameraResolution.x) {
-      parameters.setPreviewSize(cameraResolution.x, cameraResolution.x);
-    } else {
-      parameters.setPreviewSize(cameraResolution.y, cameraResolution.y);
-    }
+    parameters.setPreviewSize(cameraResolution.x, cameraResolution.y);
 
     setFlash(parameters);
     setZoom(parameters);
@@ -110,6 +110,7 @@ final class CameraConfigurationManager {
       if (downPolymorphic != null)
         downPolymorphic.invoke(camera, new Object[]{angle});
     } catch (Exception e1) {
+      e1.printStackTrace();
     }
   }
 
@@ -217,24 +218,17 @@ final class CameraConfigurationManager {
 //    camera.stopFaceDetection();
 //    camera.cancelAutoFocus();
 
-//    List<Camera.Area> fAreas = new ArrayList<Camera.Area>();
-//    Rect rect = new Rect(-100, -600, 200, 200);
-//    fAreas.add(new Camera.Area(rect, 1000));
-
     parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-    // 自動連續對焦
-    if (Build.VERSION.SDK_INT >= 23) {
-      // 此功能 htc m7(api 21) 無效 三星 On5 無效(api 21)...
+
+    // 自動連續對焦, 特定型號優化
+    // J2 : SM-G532G
+    // On5: SM-G5510
+    if ("SM-G532G".equals(Build.MODEL)) {
+      // 三星 J2
 //      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
-    } else {
-//      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
     }
 
-//    parameters.setFocusAreas(fAreas);
-//    parameters.setMeteringAreas(fAreas);
-
-    // parameters.setPreviewFpsRange(24000, 24000); // 24fps
-//    parameters.setSceneMode(Camera.Parameters.SCENE_MODE_HDR);
+//    parameters.setPreviewFpsRange(24000, 24000); // 24fps
   }
 
   private void setFlash(Camera.Parameters parameters) {
