@@ -240,6 +240,9 @@ RCT_EXPORT_METHOD(stopSession) {
 //    });
 //}
 
+long nextBarcodeReadTimeMillis = 0;
+long waitingTimeMillis = 1000;
+
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputMetadataObjects:(NSArray *)metadataObjects fromConnection:(AVCaptureConnection *)connection {
 //    NSLog(@"captureOutput!!!");
     for (AVMetadataMachineReadableCodeObject *metadata in metadataObjects) {
@@ -251,15 +254,21 @@ RCT_EXPORT_METHOD(stopSession) {
                     return;
                 }
                 
-                AudioServicesPlaySystemSound(self.beep_sound_id);
-                
-//                NSLog(@"type = %@, data = %@", metadata.type, metadata.stringValue);
-                self.barcode.onBarCodeRead(@{
-                                              @"data": @{
-                                                        @"type": metadata.type,
-                                                        @"code": metadata.stringValue,
-                                              },
-                                            });
+                // 加上回傳時間間隔，降低回傳的頻率，避免造成前端JS負擔
+                NSDate *currentTime = [NSDate date];
+                long currentTimeMillis = [[NSDate date] timeIntervalSince1970] * 1000;
+                if (currentTimeMillis > nextBarcodeReadTimeMillis) {
+                    nextBarcodeReadTimeMillis = currentTimeMillis + waitingTimeMillis;
+                    AudioServicesPlaySystemSound(self.beep_sound_id);
+                    
+                    //                    NSLog(@"type = %@, data = %@", metadata.type, metadata.stringValue);
+                    self.barcode.onBarCodeRead(@{
+                                                 @"data": @{
+                                                         @"type": metadata.type,
+                                                         @"code": metadata.stringValue,
+                                                         },
+                                                 });
+                }
             }
         }
     }
