@@ -240,10 +240,9 @@ private final Context context;
 //      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
       if (parameters.getMaxNumFocusAreas() > 0) {
         parameters.setFocusAreas(fAreas);
-      };
-      if (parameters.getMaxNumMeteringAreas() > 0) {
+        // 三星 on5 的 parameters.getMaxNumMeteringAreas() 沒有用，所以直接設測光點，不再判斷
         parameters.setMeteringAreas(fAreas);
-      }
+      };
 
       camera.setParameters(parameters);
       camera.autoFocus(autoFocusCallback);
