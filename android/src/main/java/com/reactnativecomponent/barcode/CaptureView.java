@@ -39,7 +39,10 @@ import java.util.Vector;
 
 import tw.com.quickmark.sdk.qmcore;
 
-// TextureView.SurfaceTextureListener 比 Camera.PreviewCallback 還要先進
+/**
+ * 會再被 RCTCaptureManager 包裝起來，作為 ReactNative 的 View Component
+ * TextureView.SurfaceTextureListener 比 Camera.PreviewCallback 還要先進
+ * */
 public class CaptureView extends FrameLayout implements TextureView.SurfaceTextureListener {
     private CaptureActivityHandler handler;
 
@@ -181,7 +184,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
         // J2    w:540,  h:960   density:1.5
 
         hasSurface = false;
-        this.setOnTouchListener(new TouchListener());
+        // 設置觸控功能
+//        this.setOnTouchListener(new TouchListener());
     }
 
 
@@ -377,7 +381,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
 
     public void startScan() {
-        if (!hasSurface) {
+        // 增加判斷 surfaceTexture != null，避免相機畫面關掉後，不小心在背景啟動相機...
+        if (!hasSurface && surfaceTexture != null) {
             viewfinderView.drawLine = true;
             hasSurface = true;
             CameraManager.get().framingRectInPreview = null;
@@ -385,7 +390,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
 
             CameraManager.get().initPreviewCallback();
             CameraManager.get().startPreview();
-
         }
 //        decodeFormats = null;
         handler = new CaptureActivityHandler(this, decodeFormats, characterSet);
@@ -424,7 +428,8 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     }
 
     /**
-     * ondestroy调用,会执行onDetachedFromWindow
+     * onDestroy调用,會執行 onDetachedFromWindow
+     * onSurfaceTextureDestroyed 先執行
      */
     @Override
     protected void onDetachedFromWindow() {
@@ -701,27 +706,34 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     }
 
     /**
-     * 开启闪光灯常亮
+     * 開啟閃光燈常亮
      */
     public void OpenFlash(){
         try {
-            Camera.Parameters param =CameraManager.get().getCamera().getParameters();
+            if (CameraManager.get().getCamera() == null) {
+                return;
+            }
 
+            Camera.Parameters param = CameraManager.get().getCamera().getParameters();
             param.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
 
             CameraManager.get().getCamera().setParameters(param);
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }  /**
-     * 关闭闪光灯常亮
+    }
+
+    /**
+     * 關閉閃光燈常亮
      */
     public void CloseFlash(){
         try {
+            if (CameraManager.get().getCamera() == null) {
+                return;
+            }
+
             Camera.Parameters param = CameraManager.get().getCamera().getParameters();
-
             param.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-
 
             CameraManager.get().getCamera().setParameters(param);
         } catch (Exception e) {
@@ -854,6 +866,10 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
         stopScan();
+        surface.release();
+        // API 26 後才有 surface.isRelease() 方法
+        // 所以先暫時將 surfaceTexture 設為 null 作為 isRelease 判斷用
+        surfaceTexture = null;
         return false;
     }
 
