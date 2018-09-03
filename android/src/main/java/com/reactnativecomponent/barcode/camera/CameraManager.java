@@ -240,9 +240,14 @@ private final Context context;
 //      parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
       if (parameters.getMaxNumFocusAreas() > 0) {
         parameters.setFocusAreas(fAreas);
-        // 三星 on5 的 parameters.getMaxNumMeteringAreas() 沒有用，所以直接設測光點，不再判斷
+      }
+
+      // maxNumMeteringAreas 為零的型號: SM-G5510(On5 青春版), SM-G5700(J5 Prime)
+      int maxNumMeteringAreas = parameters.getMaxNumMeteringAreas();
+      if (maxNumMeteringAreas > 0) {
+        // 不判斷直接硬設的話，可能導致 crash
         parameters.setMeteringAreas(fAreas);
-      };
+      }
 
       camera.setParameters(parameters);
       camera.autoFocus(autoFocusCallback);
