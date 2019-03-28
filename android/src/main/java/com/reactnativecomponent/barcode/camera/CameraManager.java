@@ -31,7 +31,6 @@ import android.graphics.SurfaceTexture;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.IOException;
-import com.reactnativecomponent.barcode.decoding.quickmark.DecodeBufferSource;
 
 /**
  * This object wraps the Camera service object and expects to be the only one talking to it. The
@@ -384,40 +383,6 @@ private final Context context;
     }
     throw new IllegalArgumentException("Unsupported picture format: " +
         previewFormat + '/' + previewFormatString);
-  }
-
-  /**
-   * A factory method to build the appropriate DecodeBufferSource object based on the format
-   * of the preview buffers, as described by Camera.Parameters.
-   *
-   * @param data A preview frame.
-   * @param width The width of the image.
-   * @param height The height of the image.
-   * @return A DecodeBufferSource instance.
-   */
-  public DecodeBufferSource buildDecodeBuffer(byte[] data, int width, int height) {
-    Rect rect = getFramingRectInPreview();
-    int previewFormat = configManager.getPreviewFormat();
-    String previewFormatString = configManager.getPreviewFormatString();
-    switch (previewFormat) {
-      // This is the standard Android format which all devices are REQUIRED to support.
-      // In theory, it's the only one we should ever care about.
-      case PixelFormat.YCbCr_420_SP:
-        // This format has never been seen in the wild, but is compatible as we only care
-        // about the Y channel, so allow it.
-      case PixelFormat.YCbCr_422_SP:
-        return new DecodeBufferSource(data, width, height, rect.left, rect.top,
-                rect.width(), rect.height());
-      default:
-        // The Samsung Moment incorrectly uses this variant instead of the 'sp' version.
-        // Fortunately, it too has all the Y data up front, so we can read it.
-        if ("yuv420p".equals(previewFormatString)) {
-          return new DecodeBufferSource(data, width, height, rect.left, rect.top,
-                  rect.width(), rect.height());
-        }
-    }
-    throw new IllegalArgumentException("Unsupported picture format: " +
-            previewFormat + '/' + previewFormatString);
   }
 
   public Camera getCamera() {

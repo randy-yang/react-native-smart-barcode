@@ -37,8 +37,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Vector;
 
-import tw.com.quickmark.sdk.qmcore;
-
 /**
  * 會再被 RCTCaptureManager 包裝起來，作為 ReactNative 的 View Component
  * TextureView.SurfaceTextureListener 比 Camera.PreviewCallback 還要先進
@@ -105,9 +103,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     boolean autoStart = true;//是否自动启动扫描
     String ResultStr="";
 
-    // another decoder
-    public qmcore qmDecoder;
-
    /* private final VerticalSeekBar.OnSeekBarChangeListener onSeekBarChangeListener = new VerticalSeekBar.OnSeekBarChangeListener() {
 
         @Override
@@ -149,27 +144,6 @@ public class CaptureView extends FrameLayout implements TextureView.SurfaceTextu
     public CaptureView(Activity activity, Context context) {
         super(context);
         this.activity = activity;
-
-        /*
-         * Load dummy library to force system to
-         * use 32 bit compatibility mode
-         */
-        try {
-            System.loadLibrary("hello-jni");
-        } catch (UnsatisfiedLinkError ule) {
-            Log.i(TAG, "Loading hello-jni failed.");
-            ule.printStackTrace();
-        }
-
-        // QuickMark library
-        qmDecoder = new qmcore(this.activity);
-        if (!qmDecoder.mSdkLoaded) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this.activity);
-            builder.setTitle("QRCode");
-            builder.setMessage("Can't load quickmarksdk.");
-            builder.setNegativeButton("ok", null);
-            builder.show();
-        }
 
         CameraManager.init(activity.getApplication());
         layoutParam = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);

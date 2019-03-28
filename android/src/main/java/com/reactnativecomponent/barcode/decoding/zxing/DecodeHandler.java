@@ -35,12 +35,9 @@ import com.reactnativecomponent.barcode.camera.PlanarYUVLuminanceSource;
 
 import java.util.Hashtable;
 
-final class
-DecodeHandler extends Handler {
+final class DecodeHandler extends Handler {
 
-//  private static final String TAG = DecodeHandler.class.getSimpleName();
-  private static final String TAG ="Test";
-
+  private static final String TAG = DecodeHandler.class.getSimpleName();
 
   private final CaptureView captureView;
   private final MultiFormatReader multiFormatReader;
