@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   s.platform       = :ios, "8.0"
 
   s.source         = { :git => 'https://github.com/randy-yang/react-native-smart-barcode.git', :tag => "v#{s.version}" }
-  s.source_files   = "ios/RCTBarcode/**/*.{h,m}"
+  s.source_files   = "ios/**/*.{h,m}"
 
   s.dependency     'React'
 end
