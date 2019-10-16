@@ -14,6 +14,10 @@ Pod::Spec.new do |s|
 
   s.source         = { :git => 'https://github.com/randy-yang/react-native-smart-barcode.git' }
   s.source_files   = "ios/**/*.{h,m}"
+  s.exclude_files  = [
+    "ios/**/QRCScanner.{h,m}",
+    "ios/**/ScannerRect.{h,m}"
+  ]
 
   s.dependency     'React'
 end
