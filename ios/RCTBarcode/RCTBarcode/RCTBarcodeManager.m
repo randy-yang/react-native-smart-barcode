@@ -274,10 +274,6 @@ long waitingTimeMillis = 1000;
     }
 }
 
-
-
-
-
 - (NSDictionary *)constantsToExport
 {
     return @{
@@ -305,5 +301,9 @@ long waitingTimeMillis = 1000;
             };
 }
 
++ (BOOL)requiresMainQueueSetup
+{
+  return YES;
+}
 
 @end
